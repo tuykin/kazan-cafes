@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Семейная система питания</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0F1117;color:#E0E0E0;font-family:system-ui,sans-serif;font-size:14px;padding-bottom:40px}
+button{cursor:pointer;font-family:inherit}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState} = React;
+
+const C = {
+  bg:"#0F1117",card:"#1A1D27",bd:"#2A2D3A",
+  anvar:"#2D5A8E",rita:"#7B4A8E",akim:"#2E8E5A",
+  family:"#8E5A2D",yes:"#66BB6A",no:"#EF5350",ok:"#FFA726",muted:"#90A4AE"
+};
+
+const Tag = ({type,children}) => {
+  const s = {
+    yes:{bg:"#1B5E2022",color:"#66BB6A",border:"#2E7D3244"},
+    no:{bg:"#B71C1C22",color:"#EF5350",border:"#C6282844"},
+    ok:{bg:"#E6510022",color:"#FFA726",border:"#E6510044"},
+    neutral:{bg:"#37474F22",color:"#90A4AE",border:"#37474F44"},
+  }[type]||{bg:"#37474F22",color:"#90A4AE",border:"#37474F44"};
+  return <span style={{background:s.bg,color:s.color,border:`1px solid ${s.border}`,borderRadius:4,padding:"1px 8px",fontSize:11,marginRight:4,marginBottom:4,display:"inline-block"}}>{children}</span>;
+};
+
+const Card = ({children,style={}}) => (
+  <div style={{background:C.card,border:`1px solid ${C.bd}`,borderRadius:12,padding:14,marginBottom:10,...style}}>{children}</div>
+);
+const Sec = ({children,color}) => (
+  <div style={{color,fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>{children}</div>
+);
+
+const PERSONS = {
+  anvar:{
+    name:"Анвар",color:C.anvar,emoji:"⚡",model:"Инженерная / Монопитание / Чемпионат",
+    profile:[
+      {label:"Глютен",type:"no",note:"Чем жиже — тем хуже (макароны плохо, твёрдое терпимее)",src:"глютен: чем более жидкий глютен, тем хуже"},
+      {label:"Сахар",type:"no",note:"Заменитель жизни, сублимация",src:"сахар: сахар-заменитель жизни"},
+      {label:"Молочка",type:"no",note:"Сырое молоко — плохо. Кисломолочное — иногда как лекарство. Сыр — травма/терапия",src:"молочка: сырое молоко плохо, кисломолочные иногда как лекарство"},
+      {label:"Свинина",type:"no",note:"Абсолютное нет",src:"свинина: АБСОЛЮТНО НЕТ"},
+      {label:"Красное мясо",type:"yes",note:"Говядина, баранина, индейка, страус — ОК, даже с кровью. Белое мясо — не очень",src:"мясо: красное ОК, белое не очень"},
+      {label:"Красная рыба",type:"yes",note:"Лосось — ОК. Белая/жёлтая — плохо, особенно осетрина",src:"рыба красная ОК, белая/жёлтая плохо"},
+      {label:"Б + У вместе",type:"no",note:"Строго разделять. Белки — для баловства. Углеводы — как кирпичи",src:"белки и углеводы: разделять Б и У"},
+      {label:"Консерванты",type:"no",note:"Всё, что химически изменяет продукт (в т.ч. соль)",src:"ограничения: консерванты, ферментированное, маринованное"},
+      {label:"Кофе / энергетики",type:"no",note:"Хамируют внутренние механизмы наглости и дееспособности",src:"энергетики: хамируют внутренние механизмы"},
+    ],
+    rules:[
+      {text:"Один приём — только сырое ИЛИ только приготовленное",src:"правило: отдельный приём — сырая либо приготовленная"},
+      {text:"Свежесть — ключевой критерий. Только текуще потребные продукты",src:"какие продукты полезны: ТЕКУЩЕ ПОТРЕБНЫЕ, чем свежее тем лучше"},
+      {text:"Белки и углеводы раздельно",src:"белки и углеводы: разделять Б и У"},
+      {text:"Есть только при актуальной потребности — инженерная модель",src:"МОДЕЛЬ ПИТАНИЯ: ИНЖЕНЕРНАЯ"},
+      {text:"Монопитание — нормальный режим (одно блюдо или один продукт)",src:"монопитание: как кошка одно мясо, или как мышка один хлеб"},
+      {text:"Обоняние — стражник иммунитета. Доверять запаху при выборе еды",src:"правило иммунитета: обоняние — стражник"},
+      {text:"Еда перед активностью (первая модель форсажа)",src:"модель форсажа: ПЕРВАЯ — едят перед активностью"},
+    ],
+    meals:{
+      breakfast:["Красная рыба (лосось/форель) + запечённая морковь длинными палочками, спаржа, репка","Запечённые крупные куски овощей со специями (морковь, брокколи, цветная капуста)","Рисовая каша с корицей и кардамоном + кешью","Рисовый пудинг (кокосовое молоко, корица, кардамон)","Говядина запечённая + репка + специи","Кабачковые драники без муки + хумус"],
+      lunch:["Говяжьи кёфтешки маленькие (без панировки) + тушёные овощи","Свекольник тёплый с говядиной","Нут запечённый со специями (углеводный приём, без мяса)","Красная рыба + крупные запечённые овощи","Вегетарианский плов с изюмом и орехами"],
+      dinner:["Конструктор: айсберг, дайкон, огурцы, горошек сырой, цукини слайсами, орехи, урбечи","Витаминный салат (капуста, морковь, яблоко, семена)","Свежая зелень (шпинат, щавель, петрушка) + орехи"],
+    }
+  },
+  rita:{
+    name:"Рита",color:C.rita,emoji:"🌸",model:"Раздельное питание / Колибри",
+    profile:[
+      {label:"Глютен",type:"no",note:"Нейтрально по природе — в рамках семейной системы исключаем",src:"глютен: нейтрально"},
+      {label:"Сахар",type:"no",note:"Вульгарное, снижает ясность и чистоту",src:"сахар: что-то вульгарное, снижающее ясность, чистоту"},
+      {label:"Молочка",type:"ok",note:"Нет лёгкого ответа. Возможно, помогает во время болезни",src:"молочка: нет лёгкого ответа, возможно помогает во время болезни"},
+      {label:"Мясо + углеводы",type:"no",note:"Никогда вместе. 60–70 мин перерыв",src:"правило питания: мясо отдельно от углеводов"},
+      {label:"Мясо + овощи",type:"yes",note:"Разрешено",src:"правило: мясо с овощами можно"},
+      {label:"Морепродукты + углеводы",type:"yes",note:"Особое разрешение",src:"правило: с морепродуктами (углеводы) можно"},
+      {label:"Углеводы + овощи",type:"no",note:"Нельзя — только с морепродуктами",src:"правило: углеводы с овощами нельзя"},
+      {label:"Жирное в конце",type:"no",note:"Никогда не добавлять жирную пищу в конце трапезы",src:"совет чего не делать никогда: никогда не добавлять в конце еды жирную пищу"},
+      {label:"Сырое + приготовлённое",type:"no",note:"Разделять в одном приёме пищи",src:"чудесный совет телу: разделять сырую и приготовленную пищу"},
+      {label:"Холодное копчение / купаты",type:"yes",note:"Подходит",src:"из сессии: подходит холодного копчения, купаты"},
+      {label:"Кофе / стимуляторы",type:"no",note:"Как оскорбление, как загрязнение тебя",src:"кофе: любые стимуляторы — как оскорбление, как загрязнение"},
+    ],
+    rules:[
+      {text:"Сырая и приготовленная пища — разделять в одном приёме",src:"чудесный совет телу: разделять сырую и приготовленную пищу"},
+      {text:"Мясо отдельно от углеводов. С овощами ✓. Морепродукты + углеводы ✓",src:"правило питания: мясо отдельно от углеводов"},
+      {text:"Перерыв белки ↔ углеводы: 60–70 мин",src:"перерыв между белками и углеводами: 60-70 мин"},
+      {text:"Овощи/фрукты → любая другая пища: 20 мин",src:"от овощей фруктов к любой пище — 20 мин"},
+      {text:"Не пить во время еды (влагу — из овощей и фруктов)",src:"разделение пищи и жидкости: лучше не пить во время еды"},
+      {text:"Есть с удовольствием — обязательное условие",src:"правило питания: есть с удовольствием"},
+      {text:"Зимой — более тяжёлая пища, летом — лёгкая и меньше",src:"сезонность: зимой нужна более тяжелая пища, летом легкая и мало"},
+    ],
+    meals:{
+      breakfast:["Купаты + запечённые овощи (мясо + овощи ✓, всё приготовленное ✓)","Рыба холодного копчения — отдельным приёмом (только приготовленное)","Запечённые овощи с травами и специями (один тип пищи)","Фрукты — отдельным приёмом (только сырое, ничего не смешивать)","Квашеная капуста + запечённые овощи (иногда, для витамина С и укрепления)"],
+      lunch:["Говядина/индейка запечённая + тушёные/запечённые овощи (мясо+овощи ✓)","Морепродукты (креветки, мидии) + рис без сливочного соуса (морепродукты+углеводы ✓)","Суп-пюре овощной без сливок (кабачковый, тыквенный со специями)","Котлеты говядина/индейка без панировки + овощи гриль"],
+      dinner:["Свежий листовой салат (только сырое — не смешивать с приготовленным)","Свежие овощные палочки (морковь, сельдерей, огурец) с хумусом","Фрукты — если не было утром (отдельный приём)"],
+    }
+  },
+  akim:{
+    name:"Аким",color:C.akim,emoji:"🌱",model:"Конвейер / Самостоятельность",
+    profile:[
+      {label:"Глютен",type:"no",note:"Не рекомендован. Хлеб — самая плохая еда",src:"глютен: не рекомендовано, самая плохая еда — хлеб"},
+      {label:"Сахар",type:"no",note:"Сахар вместо активности — заменитель",src:"сахар: сахар вместо активности"},
+      {label:"Коровье молоко",type:"no",note:"Не рекомендовано",src:"молочка: коровье не рекомендовано"},
+      {label:"Козье / растительное молоко",type:"yes",note:"Можно",src:"молочка: козье, овечье, растительное молоко можно"},
+      {label:"Белки",type:"yes",note:"Можно с чем угодно, кроме углеводов",src:"белки: можно с чем угодно, кроме углеводов"},
+      {label:"Углеводы",type:"ok",note:"Как будто не нужны. Строго отдельно от белков",src:"углеводы как будто не нужны, как будто не еда"},
+      {label:"Испорченное / несвежее",type:"no",note:"Никогда — главный запрет. Свежее со свежим, несвежее отдельно",src:"никогда не употреблять испорченные продукты"},
+      {label:"Чёрный чай",type:"no",note:"Нарушает микрофлору системы переваривания",src:"черный чай не надо, может нарушить микрофлору"},
+      {label:"Травяные чаи",type:"yes",note:"Можно",src:"травяные чаи можно"},
+      {label:"Кофе",type:"no",note:"Лучше не начинать",src:"кофе (кофеин): лучше не начинать"},
+    ],
+    rules:[
+      {text:"Самому решать — что и сколько (внутренний локус)",src:"чудесный совет: самостоятельно определять, чего и сколько будешь употреблять"},
+      {text:"Самое свежее — в первую очередь. Несвежее со свежим не смешивать",src:"правило питания: самое свежее — самое лучшее, есть в первую очередь"},
+      {text:"Белки и углеводы строго отдельно",src:"белки и углеводы: отдельно"},
+      {text:"Пить отдельно — когда хочет пить, есть — когда хочет есть",src:"разделение пищи и жидкости: пить отдельно, когда хочет пить"},
+      {text:"Зимой — более приготовленная пища, летом — лёгкая",src:"сезонность: зимой нужна более приготовленная пища"},
+    ],
+    meals:{
+      breakfast:["Свежие фрукты первыми (самые свежие в приоритете: яблоко, груша, ягоды)","Яйца + свежие овощи (белковый приём, без углеводов рядом)","Козье / растительное молоко + орехи","Свежеприготовленная рыба/мясо + свежие овощные палочки"],
+      lunch:["Запечённое мясо (говядина/баранина) + овощи — без углеводов рядом","Нут запечённый со специями — углеводный приём, без мяса","Суп на свежем бульоне (без глютена, без хлеба)","Свежий салат с белком (яйцо / рыба + листовые)"],
+      dinner:["Лёгкий — свежие овощи, фрукты, орехи","Травяной чай","По желанию — то, что хочется (принцип самостоятельности)"],
+      school:["Орехи (кешью, грецкие, кедровые) + свежие фрукты (яблоко, груша)","Запечённое мясо/рыба + морковь и огурец палочками (белковый контейнер)","Нут запечённый — отдельный углеводный контейнер (без мяса)","Козье молоко / растительное молоко в небольшой бутылке","Травяной чай в термосе","⚠ Правило контейнера: если белок — без углеводов. Если углеводы — без мяса."],
+    }
+  }
+};
+
+const MATRIX = [
+  {label:"Глютен",anvar:"no",rita:"no",akim:"no",note:""},
+  {label:"Сахар",anvar:"no",rita:"no",akim:"no",note:""},
+  {label:"Коровья молочка",anvar:"no",rita:"no",akim:"no",note:"Анвар: кисломолочное иногда как лекарство. Аким: козье/растительное ✓"},
+  {label:"Говядина / баранина",anvar:"yes",rita:"yes",akim:"yes",note:""},
+  {label:"Бобовые (нут, чечевица)",anvar:"yes",rita:"yes",akim:"yes",note:""},
+  {label:"Красная рыба",anvar:"yes",rita:"yes",akim:"yes",note:"Аким: свежесть критична"},
+  {label:"Мясо + углеводы вместе",anvar:"no",rita:"no",akim:"no",note:"Все трое разделяют Б и У"},
+  {label:"Кофе / стимуляторы",anvar:"no",rita:"no",akim:"no",note:""},
+];
+
+const SHARED_RULES = [
+  {rule:"Хлеб и мучные изделия не подаём",detail:"Замена: рисовые хлебцы, хумус, овощные палочки",who:"все"},
+  {rule:"Мясо и рыба — без соуса на основе муки или сливок",detail:"Специи и запекание — базовый формат",who:"все"},
+  {rule:"Белки и углеводы — на отдельных тарелках",detail:"Каждый берёт то, что подходит его приёму. Правило для всех троих",who:"Анвар, Рита, Аким"},
+  {rule:"Не смешивать сырое и приготовлённое",detail:"На совместном столе — либо запечённое, либо свежий салат отдельно",who:"Рита (строго) + рекомендовано всем"},
+  {rule:"Десерты: фрукты, финики, орехи, урбечи",detail:"Без рафинированного сахара",who:"все"},
+  {rule:"Напитки: травяные чаи, вода — отдельно от еды",detail:"Рита не пьёт во время еды. Акиму — только травяной (не чёрный чай)",who:"все"},
+  {rule:"Жирное не подавать в конце трапезы",detail:"Правило Риты, разумно для всех",who:"Рита + рекомендовано всем"},
+];
+
+const SHARED_DISHES = [
+  {name:"Чечевичный суп-пюре со специями",note:"Без сливок. Имбирь, куркума. Хлеб не подаём."},
+  {name:"Тыквенный суп-пюре (кокосовое молоко)",note:"Без глютена, без молочки. Специи обязательно."},
+  {name:"Говяжьи кёфтешки + запечённые овощи",note:"Без панировки. Углеводы — на отдельной тарелке для тех, кто берёт."},
+  {name:"Свекольник тёплый с говядиной",note:"Без хлеба. Жирное в конце не добавлять."},
+  {name:"Нут запечённый со специями",note:"Отдельная тарелка. Рядом мясо не ставить (правило Б/У у всех)."},
+  {name:"Салат-конструктор",note:"Айсберг, дайкон, огурцы, горошек сырой, орехи, урбечи. Каждый собирает сам."},
+  {name:"Вегетарианский плов с изюмом и орехами (выходные)",note:"Углеводный приём. Мясо — на отдельной тарелке или отдельным приёмом."},
+];
+
+const TABS = [
+  {id:"overview",label:"📊 Обзор"},
+  {id:"anvar",label:"⚡ Анвар"},
+  {id:"rita",label:"🌸 Рита"},
+  {id:"akim",label:"🌱 Аким"},
+  {id:"shared",label:"🍽 Стол"},
+];
+
+function App() {
+  const [tab, setTab] = useState("overview");
+  const [showSrc, setShowSrc] = useState(false);
+
+  const p = PERSONS[tab];
+
+  return (
+    <div style={{background:C.bg,minHeight:"100vh",color:"#E0E0E0",fontFamily:"system-ui,sans-serif",padding:16}}>
+      <div style={{textAlign:"center",marginBottom:16}}>
+        <div style={{fontSize:20,fontWeight:800}}>🥗 Семейная система питания</div>
+        <div style={{color:"#555",fontSize:12,marginTop:3}}>Без глютена · Без сахара · Без коровьей молочки</div>
+      </div>
+
+      <div style={{display:"flex",gap:6,marginBottom:16,justifyContent:"center",flexWrap:"wrap"}}>
+        {TABS.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{
+            background:tab===t.id?"#2D5A8E":C.card,color:tab===t.id?"#fff":"#888",
+            border:`1px solid ${tab===t.id?"#2D5A8E":C.bd}`,borderRadius:8,
+            padding:"6px 12px",fontSize:12,fontWeight:tab===t.id?700:400
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {/* OVERVIEW */}
+      {tab==="overview" && (
+        <div>
+          <Card>
+            <Sec color="#90A4AE">Матрица совместимости</Sec>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                <thead>
+                  <tr>
+                    {["","⚡ Анвар","🌸 Рита","🌱 Аким"].map(h=>(
+                      <th key={h} style={{padding:"6px 8px",textAlign:"center",color:"#666",fontWeight:600,borderBottom:`1px solid ${C.bd}`}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {MATRIX.map(row=>(
+                    <tr key={row.label}>
+                      <td style={{padding:"6px 8px",color:"#CCC",fontSize:12}}>
+                        {row.label}
+                        {row.note&&<div style={{fontSize:10,color:"#555",marginTop:2}}>{row.note}</div>}
+                      </td>
+                      {["anvar","rita","akim"].map(k=>(
+                        <td key={k} style={{textAlign:"center",padding:"6px 8px"}}>
+                          {row[k]==="yes"&&<span style={{color:"#66BB6A",fontSize:16}}>✓</span>}
+                          {row[k]==="no"&&<span style={{color:"#EF5350",fontSize:16}}>✗</span>}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{fontSize:11,color:"#555",marginTop:8}}>✓ подходит &nbsp; ✗ не подходит</div>
+          </Card>
+
+          <Card>
+            <Sec color="#FF8A65">Ключевые различия</Sec>
+            {[
+              {color:C.anvar,name:"⚡ Анвар",text:"Инженерная модель: ест только при актуальной потребности. Монопитание — норма. Красное мясо и красная рыба. Строгое разделение сырого/приготовлённого и Б/У. Обоняние — стражник."},
+              {color:C.rita,name:"🌸 Рита",text:"Раздельное питание: мясо строго без углеводов (с овощами ✓, морепродукты+углеводы ✓). Не пить во время еды. Сырое и приготовлённое не смешивать. Есть с удовольствием — обязательно."},
+              {color:C.akim,name:"🌱 Аким",text:"Конвейер + самостоятельность: сам решает что и сколько. Свежесть — главный критерий. Белки без углеводов. Углеводы как будто не нужны. Козье/растительное молоко ✓, коровье ✗."},
+            ].map(it=>(
+              <div key={it.name} style={{marginBottom:10,paddingLeft:10,borderLeft:`2px solid ${it.color}44`}}>
+                <span style={{color:it.color,fontWeight:700,fontSize:13}}>{it.name}</span>
+                <div style={{fontSize:12,color:"#BBB",marginTop:3,lineHeight:1.6}}>{it.text}</div>
+              </div>
+            ))}
+          </Card>
+
+          <Card>
+            <Sec color="#80CBC4">Ритм дня</Sec>
+            {[
+              {time:"08:00",label:"Завтрак Риты",note:""},
+              {time:"~11:00",label:"Завтрак Анвара",note:""},
+              {time:"По потребности",label:"Аким — по желанию и свежести",note:""},
+              {time:"13–15:00",label:"Обед — каждый отдельно",note:"будни: школа / работа"},
+              {time:"18–19:00",label:"Ужин — совместный",note:""},
+              {time:"Сб–Вс",label:"Обед + ужин совместные",note:"выходные"},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:8,fontSize:13}}>
+                <div style={{width:100,color:"#666",fontSize:12,flexShrink:0}}>{r.time}</div>
+                <div style={{flex:1}}>{r.label}{r.note&&<span style={{color:"#555",fontSize:11}}> · {r.note}</span>}</div>
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
+
+      {/* PERSON TABS */}
+      {["anvar","rita","akim"].includes(tab) && p && (
+        <div>
+          <Card style={{borderColor:p.color+"44"}}>
+            <div style={{fontSize:18,fontWeight:800,color:p.color}}>{p.emoji} {p.name}</div>
+            <div style={{color:"#555",fontSize:12,marginTop:2}}>{p.model}</div>
+            <button onClick={()=>setShowSrc(s=>!s)} style={{fontSize:10,background:"transparent",color:"#555",border:`1px solid ${C.bd}`,borderRadius:4,padding:"2px 8px",cursor:"pointer",marginTop:8}}>
+              {showSrc?"скрыть источники":"📌 показать источники"}
+            </button>
+          </Card>
+
+          <Card>
+            <Sec color={p.color}>Профиль питания</Sec>
+            {p.profile.map(item=>(
+              <div key={item.label} style={{display:"flex",gap:10,marginBottom:8,alignItems:"flex-start"}}>
+                <Tag type={item.type}>{item.type==="yes"?"✓":item.type==="no"?"✗":"~"} {item.label}</Tag>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,color:"#999",lineHeight:1.5}}>{item.note}</div>
+                  {showSrc&&<div style={{fontSize:10,color:"#444",fontStyle:"italic",marginTop:2}}>📌 {item.src}</div>}
+                </div>
+              </div>
+            ))}
+          </Card>
+
+          <Card>
+            <Sec color={p.color}>Правила</Sec>
+            {p.rules.map((r,i)=>(
+              <div key={i} style={{marginBottom:8,paddingLeft:10,borderLeft:`2px solid ${p.color}44`}}>
+                <div style={{fontSize:13,color:"#CCC"}}>{r.text}</div>
+                {showSrc&&<div style={{fontSize:10,color:"#444",fontStyle:"italic",marginTop:2}}>📌 {r.src}</div>}
+              </div>
+            ))}
+          </Card>
+
+          {["breakfast","lunch","dinner"].map(meal=>(
+            <Card key={meal}>
+              <Sec color={p.color}>{{breakfast:"🌅 Варианты завтрака",lunch:"☀️ Варианты обеда",dinner:"🌙 Варианты ужина"}[meal]}</Sec>
+              {p.meals[meal].map((item,i)=>(
+                <div key={i} style={{fontSize:13,color:"#CCC",marginBottom:5,paddingLeft:8,borderLeft:`2px solid ${C.bd}`}}>{item}</div>
+              ))}
+            </Card>
+          ))}
+
+          {tab==="akim"&&p.meals.school&&(
+            <Card style={{borderColor:C.akim+"44"}}>
+              <Sec color={C.akim}>🎒 В школу (контейнер)</Sec>
+              {p.meals.school.map((item,i)=>(
+                <div key={i} style={{fontSize:13,color:item.startsWith("⚠")?"#FFA726":"#CCC",marginBottom:6,paddingLeft:8,borderLeft:`2px solid ${item.startsWith("⚠")?C.akim:C.bd}`,fontStyle:item.startsWith("⚠")?"italic":"normal"}}>{item}</div>
+              ))}
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* SHARED */}
+      {tab==="shared"&&(
+        <div>
+          <Card style={{borderColor:"#FFB30044"}}>
+            <Sec color="#FFB300">Когда общий стол</Sec>
+            <div style={{fontSize:13,color:"#AAA",lineHeight:1.8}}>
+              <b style={{color:"#FFA726"}}>Будни:</b> завтраки и обеды — каждый отдельно (школа/работа). Ужин — совместный.<br/>
+              <b style={{color:"#FFA726"}}>Выходные:</b> обед + ужин — совместные.
+            </div>
+          </Card>
+
+          <Card>
+            <Sec color="#66BB6A">Правила совместного стола</Sec>
+            {SHARED_RULES.map((r,i)=>(
+              <div key={i} style={{marginBottom:10}}>
+                <div style={{fontSize:13,color:"#DDD",fontWeight:600}}>{r.rule}</div>
+                <div style={{fontSize:12,color:"#777",marginTop:2}}>{r.detail}</div>
+                <div style={{fontSize:11,color:"#555",marginTop:1}}>→ {r.who}</div>
+              </div>
+            ))}
+          </Card>
+
+          <Card>
+            <Sec color="#80CBC4">Совместные блюда (подходят всем)</Sec>
+            {SHARED_DISHES.map((m,i)=>(
+              <div key={i} style={{marginBottom:10,paddingLeft:8,borderLeft:`2px solid ${C.bd}`}}>
+                <div style={{fontSize:13,color:"#DDD",fontWeight:600}}>{m.name}</div>
+                <div style={{fontSize:12,color:"#666",marginTop:2}}>{m.note}</div>
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
